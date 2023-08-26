@@ -1,0 +1,753 @@
+------------------ Modelling Users ---------------
+
+As , we know that authentication and authorization i.e. logging in and logging out only happens for the users. i.e. We have to create a model for them so, that we can store them in the database.
+
+Lec_1 :----> Go to models folder and create a new model for the user
+
+
+------------------- Creating New Users ------------------
+
+Now , all the functions related to the user will be created in the authController.js
+
+create a file in the Controller named as authController.js
+
+////////////////////////////////////////////////
+
+Lec_2 :---> go to the authController.js
+
+
+--------------- Managing Password ------------
+
+In this lecture we're gonna manage our users passwords in the database,And by that I mean to first validate if the inputted password is equal to the confirmed password.
+
+and then also to encrypt the password in the database in order to secure it against attacks
+
+////////////////////////////////////////////////
+
+Lec_3 :---> For validating inputted password just go to the userModel.js
+            Write custom validator for that
+
+            And , after this we will encrypt the password using bcrypt in the userModel.js
+
+/////////////////////////////////////////////////            
+
+Lec_4 :--->  How Authentication with JWT works : It gives us a secret string.
+             JWT is itself a string.
+             We will store JWT as a cookie or in the localStorage.
+
+             Each time a user wants to access a protected route like a user profile data so , he sends his JWT 
+             along with a request. So, it's a bit like showing his passport to get access to that route.
+
+             And once the request hits the server our app will then verify if the JWT is actually valid.
+
+             If the Token is valid then the requested data will be sent to the client and if not then error is given to the client that he/she is not allowed to visit that route.
+
+             JWT is a encoding string made up of three parts 👍
+
+             eyJhbGci0iJIUZI1NiIsInR5cCI6IkpXVCJ9. <------ HEADER
+             eyJpZCI6IjVjNzY4NWFINGRhNWQ1NmYxZmY3MzU2MSJ9. <----- PAYLOAD
+             UDDSYCLKrn38DQ03QgkGVFfobPFbWDYmb@dgsc5Yd-Y <---- VERIFY SIGNATURE
+
+             Header: ALGORITHM & TOKEN TYPE
+
+             {
+
+                "alg" : "HS256",
+                "typ" : "JWT"
+             }
+
+             PAYLOAD : DATA
+
+             {
+                "id" : "5c7685ae4da5d56f1ff73561"
+             }
+
+             VERIFY SIGNATURE
+
+             HMACSHA256 (
+
+                base64UrlEncode(header) + "." +
+                base64UrlEncode(payload),
+                my-very-secret
+
+             ) secret base64 encoded
+
+            
+             ------> SIGNING
+
+             So, (HEADER + PAYLOAD) + SECRET =====> SIGNATURE 
+
+             and (HEADER + PAYLOAD) + SIGNATURE =====> JWT ----> CLIENT
+
+
+             -----> VERIFYING
+
+             CLIENT ---> JWT ----> (HEADER + PAYLOAD) -----
+                                                           |------> TEST SIGNATURE
+                                    SECRET ----------------
+
+              and then we compare test signature  with the original signature
+              
+              
+              if (test signature === signature) {
+
+                console.log("Data has not been modified") 👉 Authenticated
+            
+              } else {
+
+                 console.log("Data has been modified") 👉 ❌ Not Authenticated <--- someone manipulated the data
+            
+              }
+
+              So, without the secret no one is able to manipulate the JWT data becoz they cannot create a valid
+              signature for the new data. I mean they could manipulate the data of course, but will always fail the verification step.
+
+    /////////////////////////////////////////////          
+              
+    Lec_5 :----->  Signing Up Users
+    
+    go to authController.js
+
+    /////////////////////////////////////////////
+
+    Lec_6 :---> Logging in Users
+
+    Step-1 : go to authController.js and implement the route for the login
+
+    Step-2 : (select:false)  in the userModel.js in password property.
+
+    Step-3 : get the email and the password from req.body and the check whether the email and the password exists or not. i.e. whether the user has entered both of them or not.
+
+    Step-4 : Now , check whether a user exists or not with the email given by the user at the time of logging in.
+
+    Step-5 : And we had marked i.e select:false in the password in the userSchema i.e. we cannot pass the password in the find function for filtering so, we have to explitly select the password.
+
+    Step-6 : After that we had created a function in the userModel.js named as correctPassword to verify the passowrd entered by the user matches with the password while signing up.
+
+    Step-7 : Create a separate function for tokensign as it is needed twice on the same file. firstly we had used that in the signUp and secondly in the login i.e. Create a "signToken" function.
+
+    Step-8 : And if user exists and correctPassword function also returns true then in that case generate a token using the "signToken" function
+
+    /////////////////////////////////////////////
+
+    Lec_7 : Protecting Tour Routes-Part 1
+
+    Step-1 : Let's say we want to show the getAllTours to only authenticated users.
+
+    i.e. before tourController.getAllTours we need to create a check point and the best way to do that is by middleware function.
+
+    So, create a middleware that runs before  handlers.
+
+    so, create a middleware in the authController.js
+
+    Step-2 : Before , the implementation of the middleware we have to protect the getAllTours routes so, just go the tourRoutes.js
+
+    Step-3 : Go the POSTMAN and set the header 
+    
+    key as Authorization
+    value as Bearer place_token_here
+
+    and to see the header just go the middleware
+    in the app.js create a middleware
+
+    app.use ((req , res , next) => {
+        
+      console.log(req.headers);
+      next();
+      
+    })
+
+    Output : 
+
+    authorization: 'Bearer place_token_here',
+  'content-type': 'application/json',
+  'user-agent': 'PostmanRuntime/7.32.3',
+
+   Step-4 : we verify if someone manipulated the data or also if the token has already expired.
+
+   go to the authController.js
+
+   /////////////////////////////////////////////////////////////////////////////
+
+   --------------- Advanced Postman Setting --------------------
+
+   Lec_8
+
+   We had set the two environments i.e
+   1) Development Env ----> Dev:Natours
+   2) Production Env ----> Prod:Natours
+
+   After this , 
+
+   Step-1 : 
+   ham log baar baar getAllUsers ke header main token ko paste kar rahe the recently logged in user kaa. As, this route is only accessible to the logged in users.
+   i.e. 
+
+   Key                      value
+   Authorization            Bearer token_value
+
+   
+   Now , we will set the value via code in POSTMAN
+
+   Go to the signup request :
+   {{URL}}api/v1/users/signup
+
+   So, we will write code in the Tests section just besides the setting.
+   And paste this below code or select the option 👍
+   Set Environment Variable.
+
+   So, key is jwt and value is taken from the signup's json response i.e. named as token
+
+   pm.environment.set("jwt", pm.response.json().token);
+
+   Step-2 : 
+
+   Signup with a new user
+
+   Advanced_Postman_Settings.jpeg in Imp_Images folder <---- see this image
+
+   and you can see that a new enironment variable is created.
+
+   Now , go to one of the protected routes in our case will go to 👍
+
+   {{URL}}api/v1/tours
+
+   and then go to the Auth just besides of Headers
+
+   After this select the Bearer Token option and set value as {{jwt}}.
+ 
+   Now , send the request to getAllTours.
+
+   Also place this code : pm.environment.set("jwt", pm.response.json().token);
+   in the logins tests i.e. {{URL}}api/v1/users/login
+
+   /////////////////////////////////////////
+
+   Lec_9 : User Roles and Permissions
+
+   Imagine the act of deleting a tour from our database. So, not every user should, of course, be allowed to do that. Even if the user is logged in.
+
+   So, we basically need to authorize only certain types of users, to perform certain actions. And , so that's exactly what authorization is.
+  
+   with authorization we basically check
+   if a certain user is allowed to access a certain resource, even if he is logged in.
+
+   So, we gonna build another middleware function here. This time to restrict certain routes, for e.g. deleting tours, only certain user roles.
+
+   1️⃣
+
+   Go to tourRoutes.js and add a checking middleware before tourController.deleteTour.
+
+   i.e. protecting the delete route.
+
+              middleware
+                   |
+                   V
+   router.delete(____ , tourController.deleteTour)
+
+   So if an administrator is trying to delete a tour, they would still need to check if he's actually logged in, right? So the first middleware in the stack here, will always be the protect one.But then, after that one, we will also have the
+authController.restrict. So restrictTo, okay? And into this function we will then pass some user roles, which will be authorized to interact with this resource. In this case, with deleting a tour.
+
+2️⃣
+
+After that go to the userModel.js and add a new field i.e. role
+
+3️⃣
+
+Delete , all the users from the database , and again fill all of them as we had added a new field.
+
+
+---> by default role will be the user
+{
+    "name": "Luvkush Sharma",
+    "email": "luvkush@gmail.com",
+    "password": "12345678",
+    "passwordConfirm": "12345678",
+
+}
+
+and create a admin
+
+{
+    "name": "admin",
+    "email": "admin@gmail.com",
+    "password": "12345678",
+    "passwordConfirm": "12345678",
+    "role": "admin"
+
+}
+
+Go to authController.js and implement restrictTo() function
+
+Hence , we are protecting the deleteTours by un-authorized user or admin and we also restricting the users from deleting the tours.
+
+Note 👍
+
+Go to the Authorization section of the delete request and add {{jwt}} as we done in the advanced postman video.
+
+So, we are going to delete "The Northern Lights" tours having id : 64df8c231453cf7f33e83436
+
+{{URL}}api/v1/tours/64df8c231453cf7f33e83436
+
+so, first user will login and he will try to delete the user. User will not be able to delete the tour.
+
+"message": "You donot have permission to perform this action",
+
+And , then login as admin and then try to delete the tour.
+
+
+///////////////////////////////////////////////
+
+// ---------------- Lec_10 -------------
+
+// ---> Password Rest Functionality : Reset Token
+
+Step-1️⃣ : For the first one is that the user sends a post request to a forgot password route, only with this email address.
+
+This will then create a reset token and sent that to the email address that was provided.
+
+Just a simple, random token, not a JSON Web Token.
+
+Step-2️⃣ : The user then sends that token from his email along with a new password in order to update his password. ---> We will implement this in the next part.
+
+Go, to the userRoutes.js and add two routes i.e. one for forgot Password and another one for reset password.
+
+So, for now , go to the authController.js
+
+and for Step-2 ) Generate random token go to the userModel.js
+
+Create a new field in the userModel.js
+i.e. passwordResetToken and passwordResetExpires
+
+
+////////////////////////////////////////////////
+
+// ----------- Lec_11 ----------
+
+--------> Sending emails with Nodemailer
+
+Step-1️⃣ : Create a file named as email.js in the utils folder.
+
+Step-2️⃣ : npm i nodemailer
+
+Step-3️⃣ : go to the email.js and write some code.
+
+Since , user need to send it's email username in the transporter i.e. create a variable in the config.env file.
+
+We will not use real gmail this time i.e. filled some random details in the email_username and email_password.
+
+We will send fake emails to mailTrap.io
+
+Since , we are allowed to send 500 emails per day on gmail. We will use Mailtrap.io website for the testing purpose.
+
+For safe email testing for staging and development.
+
+you can fake to send emails to clients, but these emails will then never reach these clients, and instead be trapped in your Mailtrap
+
+Create a new inbox in the mailtrap named as Natours and then copy username from the SMTP setting.
+
+And , we will use these credentials for the transporting purpose i.e. save all the credentials in the config.env file
+
+And, of course, we can not send the reset token right here, by adjacent, right, because, then everyone could just reset anyone's password, and take over any account that they wanted. And so that's the whole reason why we send it to an email address, because we assume that the email is a safe place, that only the user has access to.
+
+
+We have sended the non-encrypted token to URL whereas stored the encrypted one in the database.
+
+///////////////////////////////////////////////
+
+// --------------- Lec_12 ------------------
+
+------ Password Reset Functionality : Setting new Password ---------
+
+encrypt the token sended via URL and then compare it with the token in the database.
+
+go to authController.js and complete the resetPassword function
+
+also save the tests in the resetPassword request 👍
+
+Step-1 : go to {{URL}}api/v1/users/forgotPassword
+
+and send
+
+After , this copy the token from the mailTrap.io
+
+Token : 83c9c3b4fdbad90e2fe050c6ed680d2df6785e4044eddb808b9475ed0ac9f2cd
+
+Step-2 : Use this in the resetPassword request.
+
+And , the request looks like 👍
+{{URL}}api/v1/users/resetPassword/83c9c3b4fdbad90e2fe050c6ed680d2df6785e4044eddb808b9475ed0ac9f2cd
+
+Also, specify the body 👍
+
+{
+
+   "password": "newpass123",
+   "passwordConfirm": "newpassRt123"
+}
+
+So again, that's a validation error. And remember, actually, that this is the whole reason why we need to use save and not update.So before, for updating tours, we used to use findOneAndUpdate, but now, for everything related to passwords and to the user, we always use save, because we always want to run all the validators, and above all, the save middleware functions.
+
+correct : req.body
+
+{
+
+   "password": "newpass123",
+   "passwordConfirm": "newpass123"
+}
+
+
+for the Step-3 : Update changePasswordAt property for the user
+
+go to the userModel.js and create a userSchema.pre('save')
+
+So putting this passwordChanged one second in the past, will then ensure that the token is always created after the password has been changed.
+
+
+///////////////////////////////////////////////
+
+------------------- Lec_13 -----------------
+
+We allowed a user to reset his password and then create a new one, but now we also want to allow a logged-in user to simply update his password without having to forget it, and so without that whole reset process.
+
+go to the authController.js
+
+Also, create a separate route for this middleware.
+
+go to the user.Route.js and create the route.
+
+Now , create a new request having URL as 👍
+{{URL}}api/v1/users/updateMyPassword
+
+And pass three field in it : 
+1. current password
+2. new password
+3. confirm password
+
+and before sending this request you need to log in as we had applied the protected route middleware on this request.
+
+Also, select the Authorization and select Bearer token so, that after logging in the token saved in the authorization of the request 👍
+{{URL}}api/v1/users/updateMyPassword
+
+so, we will again update the password of Dheeraj Sharma which we had updated using the forgot password middleware.
+
+So, current dheeraj password is dheeraj@123
+and we will gonna update it to pass123
+
+{
+
+    "passwordCurrent" : "dheeraj@123",
+    "password" : "pass1234",
+    "passwordConfirm" : "pass1234"
+}
+
+also placed the below code in the test field of {{URL}}api/v1/users/updateMyPassword so, that after updation the generated token will be saved as an environment variable.
+
+Step : 1️⃣ ) Logged in using below body
+
+{
+
+    "email": "dheeraj@gmail.com",
+    "password": "dheeraj@123"
+}
+
+then it will generate the token which we had also saved in the request {{URL}}api/v1/users/updateMyPassword in the Authorization section besides of header section.
+
+
+Step : 2️⃣ ) 
+
+So, before updating the Dheeraj Sharma Password's it's password and passwordChangedAt property was : 
+
+password
+"$2a$12$Eluc7ky.xtooXoSNPZIOzuBD9S/UJYjsNDujQXX4WU4Gp6/Dy3lce"
+
+passwordChangedAt
+2023-08-26T02:10:48.629+00:00 <---- "Sat Aug 26 2023 07:40:48 GMT+0530 (India Standard Time)"
+
+
+And , after updating the dheeraj password to newpass123 it's field's values are 👍
+
+password
+"$2a$12$vmRMlXocLydk0SjjUtyASeFUCqSt0uw68av0GvkwN5dl9ibPOCZy."
+
+passwordChangedAt
+2023-08-26T02:54:30.029+00:00 <----- "Sat Aug 26 2023 08:24:30 GMT+0530 (India Standard Time)"
+
+///////////////////////////////////////////////
+
+---------------- Lec_14 -------------
+
+------> Updating the Current User : Data
+
+We will allow the currently logged in user to manipulate his user data.
+
+And so now, by implementing user updates, we're really leaving the domain of authentication and are moving more into real user related stuff. And so instead of using the authentication controller now, let's implement this updating functionality right in their userController.
+
+
+go to userController.js and create that handler function
+
+Also, add the route for this handler in the userRoute.js
+
+And create a new request in the POSTMAN for this route. Also , set the Authorization as before this middleware we are running the protect route middleware
+
+Since , below route 👍
+{{URL}}api/v1/users/updateMe
+
+is only for updating the user data not for updating the user password as we had already created a route for updating a password. So, When we are trying to update the password then we should get the error.
+
+Create a new user and test on it 
+
+---> User Creation
+
+{
+    "name": "testUser",
+    "email": "test@gmail.com",
+    "role": "user",
+    "password": "12345678",
+    "passwordConfirm": "12345678"
+
+}
+
+and body of the below route is 
+{{URL}}api/v1/users/updateMe
+
+
+{
+    "name" : "testUser",
+    "password" : "12345678",
+}
+
+Since , we also passed the user password i.e. it will through an error 👍
+
+"message": "This route is not for password updates. Please use /updateMyPassword",
+
+We , will only update the user name and user password.
+
+So, try to pass the role in the body of this request : 
+{{URL}}api/v1/users/updateMe
+
+--> Some malicious person trying to update the role of the user.
+
+{
+    "name" : "UpdatedTestUser",
+    "role" : "admin"
+}
+
+and res.json() looks like : 
+
+{
+    "status": "success",
+    "data": {
+        "user": {
+            "_id": "64e9769f36739ae5d22c5e7e",
+            "name": "testUser",
+            "email": "test@gmail.com",
+            "role": "user", <--- 😀
+            "__v": 0
+        }
+    }
+}
+
+And we can see that role remains user i.e. malicious user was able to update the name but not the role.
+
+//////////////////////////////////////////////
+
+-------------- Lec_15 --------------
+
+Now when a user decides to delete his account,we actually do not delete that document from the database. But instead we actually just set the account to inactive. So that the user might at some point in the future reactivate the account and also so that we still can basically access the account in the future,even if officially, let's say it has been deleted.
+
+so, inorder to implement this we need to create a new field in the userModel
+
+go to userModel.js
+
+ active : {
+     
+    type: Boolean,
+    default: true,
+    select: false
+  }
+
+By default every user that is created will be active and we will not showing this field in the res.json() i.e. select : false 
+
+So, to delete the user we need to set the active flag as false.
+
+Go to authController.js and create a new middleware for deleting the user.
+
+Also , create a route in the userRoute.js
+
+After this create a request for this. And {{URL}}api/v1/users/deleteMe is the protected route i.e. we need to select the Authorization and there select  Bearer Token i.e. selecting Authorization Header.
+
+So, create a new user that we will be delete  👍
+
+SignUp first  with the below body : 
+
+{
+    "name": "toBeDeleted",
+    "email": "deleted@gmail.com",
+    "role": "user",
+    "password": "12345678",
+    "passwordConfirm": "12345678"
+
+}
+
+
+now , go to this request {{URL}}api/v1/users/deleteMe and Send 
+
+{
+  "_id": {
+    "$oid": "64e980fe663ec84623aa69a0"
+  },
+  "name": "toBeDeleted",
+  "email": "deleted@gmail.com",
+  "role": "user",
+  "password": "$2a$12$z/dIRnzP7xZWkggtYhLwK.HRucJJ9jPg9fYm.AK5Eaoqr7rjAF4ia",
+  "active": false,
+  "__v": 0
+}
+
+also , create a new user named as Mohit Sholey and mark him also as inactive
+
+Also , we donot want to show those documents in which user's are inactive
+
+go to userModel.js and add a query  middleware there.
+
+Now , when we are trying to getAllUsers then we are not getting the inactive users. i.e. Mohit Sholey and toBeDeleted.
+
+----------- Authentication and Authorization FINISHED -------------
+
+////////////////////////////////////////////
+
+------------- Security Starts ---------------
+
+-------------- Lec_16 -----------------
+
+-----> Implementing Rate Limiting
+
+In order to prevent the same IP from making too many requests to our API and that will then help us preventing attacks like denial of service, or brute force attacks. So, that rate limiter will be implemented as a global middleware function.
+
+So, basically, what the rate limiter is gonna do, is to count the number of requests coming from one IP and then, when there are too many requests, block these requests, okay? And so it makes sense to implement that in a global middleware, so, we do that in app.js.
+
+npm i express-rate-limit
+
+and then require('express-rate-limit') in app.js
+
+and after writing code in app.js when we send requests from any of the route having /api will have these two headers
+
+i.e.
+
+X-RateLimit-Limit : 3
+X-RateLimit-Remaining : 2 <--- because we already done 1 request
+
+So, after completing all the 3 requests with-in an hour we will get an error message and to see that just go to tooManyRequestsError.png in Imp_Images folder
+
+-------------------------- Lec_17 ------------------------
+
+-----> Setting security HTTP headers
+
+npm i helmet
+
+go to app.js and require('helmet')
+
+
+--------------------- Lec_18 ----------------
+
+-----------> Data Sanitization 
+
+So, data sanitization basically means to clean all the data that comes into the application from malicious code. So, code that is trying to attack our application. In this case, we're trying to defend against two attacks.
+
+1. NoSQL query Injection
+2. Cross-site scripting attacks (XSS)
+
+So, we will do data sanitization against NoSQL query injection, and also data sanitization against cross-site scripting attacks.
+
+💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀
+
+-------> NoSql query Injection attack
+
+So, go to POSTMAN and we will Login without knowing the email address of the USER.
+And , we can do so with the help of NoSql query injection.
+
+🤯😲
+
+{
+
+    "email": { "$gt": ""},
+    "password": "12345678"
+}
+
+go to 
+NoSql_query_injection.jpg in Imp_Images folder and you'll we shocked to know that we are logged in as admin.
+
+And , we even got our access token.
+
+And just paste {"email": { "$gt": ""}} <-- this in the MongoDB compass and press Find and it will return all the users as this condition is true for all the users.
+
+So, this malicious query allows us to login by only knowing the password.
+
+--------> cross-site scripting attack
+
+Imagine that an attacker would try to insert some malicious HTML code with some JavaScript code attached to it. If that would then later be injected into our HTML site, it could really create some damage then. Using this middleware, we prevent that basically by converting all these HTML symbols. As I said before, the Mongoose validation itself is actually already a very good protection against XSS, because it won't really allow any crazy stuff to go into our database, as long as we use it correctly. Whenever you can, just add some validation to your Mongoose schemas, and that should mostly protect you from cross-site scripting, at least on the server side.
+
+Let's create a user 
+
+{
+
+    "email" : "attacker@gmail.com",
+    "password" : "1234567",
+    "passwordConfirm": "12345678",
+    "name" : "<div id='bad-code'>Name</div>"
+}
+
+goto cross_site_attack.png in Imp_Images folder
+
+You see that the XSS module that we used actually converted these HTML symbols here, mostly this one, into this HTML entity here. Let's just quickly delete this guy.
+
+
+💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀
+
+So, to protect us against these attacks let's install another middlewares.
+
+npm i express-mongo-sanitize
+
+and
+
+npm i xss-clean
+
+go to app.js
+
+------------------- Lec_19 ----------------
+
+---------> Preventing Parameter Pollution
+
+Let's login first and then try to get all the tours based on the below request URL having parameter pollution.
+
+{{URL}}api/v1/tours?sort=duration&sort=price
+
+We are trying sort our documents on the basis of two sorting conditions at the same time.
+
+npm i hpp  <--- http parameter pollution
+
+go to app.js and require this middleware
+
+
+After app.use(hpp())
+
+
+--------> Trying to send duplicate query string
+
+try to send req on the below URL
+
+{{URL}}api/v1/tours?duration=5&duration=9
+
+So, in this case we are getting the tours having duration=9 days but we are expecting the some tours having duration=5 and some with duration=9
+
+and when we de-activated the hpp() middleware then we are getting three requests i.e. one with duration=5 and another one with duration=9 and the last one having duration=5.
+And , in this case this is actually the expected behaviour.
+
+So what we can do in order to be able to use the middleware but still get this result that we expect here, with the duration, we can white list some parameters.
+
+The white list is simply an array of properties for which we actually allow duplicates in the query string.
+
+
+------------- FINISHED THIS SECTION ---------
+

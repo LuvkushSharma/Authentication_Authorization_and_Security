@@ -1,0 +1,24 @@
+{
+  "name": "authentication_authorization_and_security",
+  "version": "1.0.0",
+  "description": "Logging and Logout",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js",
+    "start:prod": "NODE_ENV=production nodemon server.js"
+  },
+  "author": "Luvkush Sharma",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^6.9.0",
+    "helmet": "^7.0.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.1",
+    "nodemailer": "^6.9.4",
+    "util": "^0.12.5",
+    "xss-clean": "^0.1.4"
+  }
+}
